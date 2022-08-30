@@ -2,40 +2,91 @@ package analyzer;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-
+import java.nio.file.Path;
 
 public class Main {
 
-    private static boolean checkFile(String filePath, String pattern) throws IOException {
-        boolean result = false;
-        byte[] buff = Files.readAllBytes(Paths.get(filePath));
-        byte[] patternBytes = pattern.getBytes();
-        for (int i = 0; i < patternBytes.length; i++) {
-            if (buff[i] == patternBytes[0]) {
-                result = true;
-                for (int j = 1; j < patternBytes.length; j++) {
-                    if (buff[i + j] != patternBytes[j]) {
-                        result = false;
-                        break;
-                    }
-                }
-                if (result) break;
+    public static void main(String[] args) {
+        if (args.length < 4) {
+            System.out.println("Some arguments are missing");
+        } else {
+
+            String algorithm = args[0];
+            String file = args[1];
+            String pattern = args[2];
+            String type = args[3];
+            String extension = file.split("\\.")[1];
+
+            long startTime = System.nanoTime();
+            if (extension.equals("pdf") && checkIfPatternExistsInFile(algorithm, file, pattern)) {
+                System.out.println(type);
+            } else {
+                System.out.println("Unknown file type");
+            }
+            System.out.println("It took: " + (System.nanoTime() - startTime) / 1000000000 + " seconds");
+        }
+    }
+
+    private static boolean checkIfPatternExistsInFile(String algorithm, String filename, String pattern) {
+        try {
+            String fileContent = Files.readString(Path.of(filename));
+            switch (algorithm) {
+                case "--naive":
+                    return naiveApproach(fileContent, pattern);
+                case "--KMP":
+                    return KMPApproach(fileContent, pattern);
+            }
+        } catch (IOException e) {
+            System.out.println("Error in opening the file");
+        }
+        return false;
+    }
+
+    private static boolean naiveApproach(String text, String pattern) {
+        return text.contains(pattern);
+    }
+
+    private static boolean KMPApproach(String text, String pattern) {
+        return isMatch(text, pattern, prefixFunction(text));
+    }
+
+    private static boolean isMatch(String text, String pattern, int[] prefixArray) {
+        int j = 0;
+
+        for (int i = 0; i < text.length(); i++) {
+            while (j > 0 && text.charAt(i) != pattern.charAt(j)) {
+                j = prefixArray[j - 1];
+            }
+            if (text.charAt(i) == pattern.charAt(j)) {
+                j++;
+            }
+            if (j == pattern.length()) {
+                return true;
             }
         }
-        return result;
+        return false;
     }
 
-    public static void main(String[] args) throws IOException {
+    private static int[] prefixFunction(String str) {
+        int[] prefixFunc = new int[str.length()];
 
-        if (args.length < 3) throw new RuntimeException("Enter parameters!");
-        String filePath = args[0];
-        String pattern = args[1];
-        String fileType = args[2];
-        if (checkFile(filePath, pattern)) System.out.println(fileType);
-        else System.out.println("Unknown file type");
+        for (int i = 1; i < str.length(); i++) {
 
+            int j = prefixFunc[i - 1];
+
+            while (j > 0 && str.charAt(i) != str.charAt(j)) {
+                j = prefixFunc[j - 1];
+            }
+
+
+            if (str.charAt(i) == str.charAt(j)) {
+                j += 1;
+            }
+
+            prefixFunc[i] = j;
+        }
+
+        return prefixFunc;
     }
-
 }
 
