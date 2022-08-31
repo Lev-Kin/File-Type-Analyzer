@@ -1,92 +1,50 @@
 package analyzer;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.InputMismatchException;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Main {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        if (args.length != 3)
+            throw new InputMismatchException("Wrong amount of arguments!");
 
-    public static void main(String[] args) {
-        if (args.length < 4) {
-            System.out.println("Some arguments are missing");
-        } else {
+        String type = args[2];
+        String pattern = args[1];
+        File directory = new File(args[0]);
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        HashMap<String, Future<Boolean>> fileCheckers = new HashMap<>();
 
-            String algorithm = args[0];
-            String file = args[1];
-            String pattern = args[2];
-            String type = args[3];
-            String extension = file.split("\\.")[1];
+        for (File f : Objects.requireNonNull(directory.listFiles())) {
+            try (InputStream inputStream = new FileInputStream(f)) {
+                String content = new String(inputStream.readAllBytes());
+                Future search = executor.submit(new KMPSearch(content, pattern));
+                fileCheckers.put(f.getName(), search);
+            } catch (IOException | OutOfMemoryError e) {
+                System.out.println("Error while opening file: " + args[0] + "\n" + e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
-            long startTime = System.nanoTime();
-            if (extension.equals("pdf") && checkIfPatternExistsInFile(algorithm, file, pattern)) {
-                System.out.println(type);
+        var filenames = (String[]) fileCheckers.keySet().toArray(new String[0]);
+        Arrays.sort(filenames);
+        for (String fileName : filenames) {
+            if (fileCheckers.get(fileName).get()) {
+                System.out.println(fileName + ": " + type);
             } else {
-                System.out.println("Unknown file type");
-            }
-            System.out.println("It took: " + (System.nanoTime() - startTime) / 1000000000 + " seconds");
-        }
-    }
-
-    private static boolean checkIfPatternExistsInFile(String algorithm, String filename, String pattern) {
-        try {
-            String fileContent = Files.readString(Path.of(filename));
-            switch (algorithm) {
-                case "--naive":
-                    return naiveApproach(fileContent, pattern);
-                case "--KMP":
-                    return KMPApproach(fileContent, pattern);
-            }
-        } catch (IOException e) {
-            System.out.println("Error in opening the file");
-        }
-        return false;
-    }
-
-    private static boolean naiveApproach(String text, String pattern) {
-        return text.contains(pattern);
-    }
-
-    private static boolean KMPApproach(String text, String pattern) {
-        return isMatch(text, pattern, prefixFunction(text));
-    }
-
-    private static boolean isMatch(String text, String pattern, int[] prefixArray) {
-        int j = 0;
-
-        for (int i = 0; i < text.length(); i++) {
-            while (j > 0 && text.charAt(i) != pattern.charAt(j)) {
-                j = prefixArray[j - 1];
-            }
-            if (text.charAt(i) == pattern.charAt(j)) {
-                j++;
-            }
-            if (j == pattern.length()) {
-                return true;
+                System.out.println(fileName + ": " + "Unknown file type");
             }
         }
-        return false;
-    }
 
-    private static int[] prefixFunction(String str) {
-        int[] prefixFunc = new int[str.length()];
-
-        for (int i = 1; i < str.length(); i++) {
-
-            int j = prefixFunc[i - 1];
-
-            while (j > 0 && str.charAt(i) != str.charAt(j)) {
-                j = prefixFunc[j - 1];
-            }
-
-
-            if (str.charAt(i) == str.charAt(j)) {
-                j += 1;
-            }
-
-            prefixFunc[i] = j;
-        }
-
-        return prefixFunc;
+        executor.shutdown();
     }
 }
+
 
