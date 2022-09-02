@@ -1,0 +1,27 @@
+type: code
+files:
+- name: src/Main.java
+  visible: true
+  text: "import java.time.*;\nimport java.util.*;\n\npublic class Main {\n    public\
+    \ static void main(String[] args) {        \n        Scanner scanner = new Scanner(System.in);\n\
+    \        List<Period> periods = createPeriodList(scanner);\n\n        Period result\
+    \ = getSumMinusMin(periods); \n\n        System.out.println(result);\n    }\n\n\
+    \    public static List<Period> createPeriodList(Scanner scanner) {\n        List<Period>\
+    \ list = new ArrayList<>();\n        list.add(Period.of(scanner.nextInt(), scanner.nextInt(),\
+    \ scanner.nextInt()));\n        list.add(Period.of(scanner.nextInt(), scanner.nextInt(),\
+    \ scanner.nextInt()));\n        list.add(Period.of(scanner.nextInt(), scanner.nextInt(),\
+    \ scanner.nextInt()));\n        list.add(Period.of(scanner.nextInt(), scanner.nextInt(),\
+    \ scanner.nextInt()));\n        list.add(Period.of(scanner.nextInt(), scanner.nextInt(),\
+    \ scanner.nextInt()));\n\n        return list;\n    }\n\n    /**\n     * Calculates\
+    \ days count in a Period unit.\n     * Assumes there are no leap years and all\
+    \ months have 30 days\n     */\n    private static int calculateDayCount(Period\
+    \ p) {\n        return p.getYears() * 365 + p.getMonths() * 30 + p.getDays();\n\
+    \    }\n\n    private static Period getSumMinusMin(List<Period> periods) {\n\n\
+    \    }\n}"
+  learner_created: false
+feedback_link: https://hyperskill.org/learn/step/20792#comment
+status: Solved
+feedback:
+  message: <html>Correct solution</html>
+  time: Fri, 02 Sep 2022 10:39:15 UTC
+record: -1
